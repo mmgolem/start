@@ -17,6 +17,11 @@ main() {
   # came in on.
   if ! (: </dev/tty) 2>/dev/null; then echo "start.sh: needs a terminal for its prompts; run it in an SSH session (ssh -t)" >&2; exit 1; fi
 
+  # First, so /etc/sudoers.d is there on an image that comes without sudo.
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update -qq
+  apt-get install -y -qq sudo git gh curl ca-certificates >/dev/null
+
   id golem >/dev/null 2>&1 || useradd -m -s /bin/bash golem
   echo 'golem ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/golem
   chmod 440 /etc/sudoers.d/golem
@@ -27,10 +32,6 @@ main() {
   if [[ -s "$keys" && ! -s /home/golem/.ssh/authorized_keys ]]; then
     install -m 600 -o golem -g golem "$keys" /home/golem/.ssh/authorized_keys
   fi
-
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq
-  apt-get install -y -qq sudo git gh curl ca-certificates >/dev/null
 
   # As golem from here. bootstrap.sh switches GitHub to Golem's own token once the age key unlocks it, so
   # this login only has to read mmgolem/setup.
